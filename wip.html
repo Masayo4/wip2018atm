@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script>
+  //
+  //  emotionapi.js
+  jQuery(function ()
+  {
+    jQuery ("#outarea_aa").text ("*** start *** ddd ***")
+
+    // URL が変更された場合（再度分析＆表示)
+    jQuery("#imageUrlTextbox").change(function () {
+      showImage()
+      getFaceInfo()
+    })
+    showImage()    // 画像を画面に表示
+    getFaceInfo()  // 画像を分析
+
+    jQuery ("#outarea_hh").text ("*** end ***")
+  })
+
+  var showImage = function ()
+  {
+    var canvas = document.getElementById ("area_aa")
+    var ctx = canvas.getContext('2d')
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    var img = new Image()
+
+    const imageUrl = jQuery("#imageUrlTextbox").val();
+    if (imageUrl) {
+      img.src = imageUrl
+      img.onload = function()
+      {
+        ctx.drawImage(img, 0, 0);
+
+      }
+    }
+  }
+
+  var getFaceInfo = function ()
+  {
+    const subscriptionKey = "APIKEY"
+
+    const imageUrl = jQuery("#imageUrlTextbox").val()
+
+    const webSvcUrl = "https://api.projectoxford.ai/emotion/v1.0/recognize"
+
+
+    if(document.getElementById('imageUrlTextbox').value=="")
+    {
+      jQuery("#OutputDiv").html("画像のURLを入力してください<br />")
+    }
+
+    jQuery.ajax({
+      type: "POST",
+      url: webSvcUrl,
+      headers: { "Ocp-Apim-Subscription-Key": subscriptionKey },
+      contentType: "application/json",
+      data: '{ "Url": "' + imageUrl + '" }'
+    }).done(function (data)
+    {
+
+      data_process (data)
+      // エラー処理
+    }).fail(function (err) {
+      if(document.getElementById('imageUrlTextbox').value!="")
+      {
+        jQuery("#OutputDiv").text("ERROR!" + err.responseText);
+      }
+    })
+  }
+
+  // ----------------------------------------------------------------------
+  // [6-4]:
+  function data_process (data)
+  {
+    jQuery ("#outarea_bb").text ("data.length = " + data.length)
+
+    if (0 < data.length) {
+
+      var canvas = document.getElementById ("area_aa")
+      var ctx = canvas.getContext('2d')
+      ctx.lineWidth = 5
+      ctx.strokeStyle = "rgb(255, 0, 255)"
+
+      var str_tmp = "";
+      var nextpeople=0;
+      for (var it=0; it< data.length; it++)
+      {
+        const faceRectange = data[it].faceRectangle;
+        const faceWidth = faceRectange.width;
+        const faceHeight = faceRectange.height;
+        const faceLeft = faceRectange.left;
+        const faceTop = faceRectange.top;
+
+        str_tmp += "left = " + faceLeft + "<br />"
+        str_tmp += "top = " + faceTop + "<br />"
+        str_tmp += "width = " + faceWidth + "<br />"
+        str_tmp += "height = " + faceHeight + "<br />"
+
+        ctx.strokeRect (faceLeft,faceTop,faceWidth,faceHeight)
+      }
+
+      jQuery ("#outarea_cc").html (str_tmp)
+    }
+    // データが取得できなかった場合
+    else {
+      jQuery("#OutputDiv").text("検出できませんでした")
+    }
+  }
+
+</script>
+<title>Happisco</title>
+</head>
+<body>
+  <div>
+    <h1>Happisco: 練習</h1>
+    <h2>Emotion APIとEmpathの使用</h2>
+    <input type="url" id="imageUrlTextbox" class="urlinput">
+  </div>
+
+  <div id="PhotoDiv">
+    <canvas id="area_aa" height="1600" width="1600"></canvas>
+  </div>
+</body>
+</html>
